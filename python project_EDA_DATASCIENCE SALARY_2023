@@ -1,0 +1,207 @@
+#set up environment
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+import seaborn as sns
+
+df = pd.read_csv("C:\\Users\\alfa\\PycharmProjects\\pythonProject1\\myproject\\dataset\\ds_salaries.csv")
+
+print('1.Understanding of data')
+
+#1.first five records in the dataset
+print('______________________First five records in the dataset___________________________________')
+print(df.head(5))
+
+
+#2.information about the columns
+print('__________________________Info about columns_____________________________________________')
+df.info()
+print(df.columns)
+
+
+#3.tuple sharing the dimensionality of the dataframe
+print('_______________Dimensionality of data frame_____________________________________________')
+print(df.shape)
+
+
+#4.for getting clarity about the data
+print('__________________________For getting more clarity about the data____________________________________')
+print(df['work_year'].value_counts())
+print(df['experience_level'].value_counts())
+print(df['employment_type'].value_counts())
+print(df['job_title'].value_counts())
+print(df['salary'].value_counts())
+print(df['salary_currency'].value_counts())
+print(df['salary_in_usd'].value_counts())
+print(df['employee_residence'].value_counts())
+print(df['company_location'].value_counts())
+print(df['company_size'].value_counts())
+
+
+#5.descriptive statistics
+print('___________________________Descriptive statistic of dataset__________________________________')
+print(df.describe())
+print('___________________________Descriptive statistic of dataset_transpose__________________________________')
+print(df.describe(include='all').fillna(' ').astype(str).transpose())
+#unique values
+print('_________________________________________mode values____________________________________________')
+print(df.mode().transpose())
+
+#6.data_summary table
+def data_summary(df):
+    print(f"Dataset has {df.shape[1]} columns and {df.shape[0]} records.")
+    summary = pd.DataFrame(index=df.columns)
+    summary['Unique'] = (df.nunique().values)
+    summary['Missing'] =(df.isnull().sum().values)
+    summary['Duplicated'] = (df.duplicated().sum())
+    summary['Types'] = (df.dtypes)
+    return summary
+
+print(data_summary(df))
+
+
+#7.to find different unique values in columns
+print('_______________________________to find different unique values in columns_______________________________________')
+column = df[['experience_level', 'employment_type', 'remote_ratio','company_size']]
+for c in column:
+    Unique = df[c].unique()
+    print(f'{c} = {Unique}')
+
+#8.to replace abbreviations with clear name
+df['experience_level'] = df['experience_level'].replace(['EN', 'MI', 'SE', 'EX'],['Entry-Level', 'Mid-Level', 'Senior-Level', 'Executive-Level'])
+df['employment_type'] = df['employment_type'].replace(['PT', 'FT', 'FL', 'CT'],
+                                                      ['Part-Time', 'Full-Time', 'Freelance', 'Contract'])
+df['remote_ratio'] = df['remote_ratio'].replace([100, 0, 50], ['remote', 'on-site', 'hybrid'])
+df['company_size'] = df['company_size'].replace(['L', 'M', 'S'], ['Large_scale', 'Medium_scale', 'Small_scale'])
+
+#datavisualisations
+
+#9.A class to show distribution of different fields
+class distribution_of_fields:
+    def __init__(self,df):
+        self.df = df
+    def distribution(self,type,title):
+        print('-------------------------------------'+title+'_______________________________________________')
+        print(df[type].value_counts())
+        df[type].value_counts().plot(kind='pie', autopct='%1.0f%%')
+        plt.title('Distribution of '+ type)
+        plt.ylabel('')
+        plt.show()
+
+f = distribution_of_fields(df)
+f.distribution('remote_ratio','Distribution of remote_ratio')
+f.distribution('experience_level','Distribution of experience_level')
+f.distribution('employment_type','Distribution of employment_type')
+f.distribution('company_size','Distribution of company_size')
+f.distribution('work_year','Distribution of work_year')
+
+
+#10.salary analysis using class
+class salary_analysis:
+    def __init__(self,df):
+        self.df = df
+    def variation_of_salary(self,type,title):
+        print('_________________'+title+'__________________________________________')
+        a = sns.boxplot(data = df, x = type, y = 'salary_in_usd')
+        a.set_facecolor('white')
+        plt.title('Salary distribution based on ' +  type)
+        plt.show()
+
+    def variation_of_salary_companysize(self):
+        print('___________________________________salary distribution based on work_year and company_size________________________________________')
+        table = pd.pivot_table(df, values='salary_in_usd', index='work_year', columns='company_size', aggfunc='median')
+        print(table)
+        fig = px.box(df, x='company_size', y='salary_in_usd', color='work_year',
+                     category_orders={"company_size": ["S", "M", "L"], "work_year": [2020, 2021, 2022, 2023]},
+                     title='Salary distribution based on work_year and company_size')
+        fig.show()
+
+    def variation_of_salary_remoteratio(self):
+        print('_____________________________salary distribution based on work_year and remote_ratio___________________________')
+        table = pd.pivot_table(df, values='salary_in_usd', index='work_year', columns='remote_ratio', aggfunc='median')
+        print(table)
+        fig = px.box(df, x='work_year', y='salary_in_usd', color='remote_ratio',
+                     category_orders={"work_year": [2020, 2021, 2022, 2023],
+                                      'remote_ratio': ['remote', 'on-site', 'hybrid']},
+                     title='Salary distribution based on work_year and remote_ratio')
+        fig.show()
+
+try:
+    sf = salary_analysis(df)
+    sf.variation_of_salary('remote_ratio','Salary distribution based on remote_ratio')
+    sf.variation_of_salary('experience_level','Salary distribution based on experience_level')
+    sf.variation_of_salary('employment_type','Salary distribution based on employment_type')
+    sf.variation_of_salary_companysize()
+    sf.variation_of_salary_remoteratio()
+except:
+    print("An exception occurred")
+finally:
+    print('Salary analysis completed successfully')
+
+
+#11.Histogram to show different experience levels
+print('_________________________________________Different Experience Levels__________________________________________')
+print(df['experience_level'].value_counts())
+column = df[['experience_level']]
+for c in column:
+    col = df[c].unique()
+colours = ['purple','yellow','blue','green']
+x =col
+y= df['experience_level'].value_counts()
+plt.bar(x,y,color = colours )
+plt.title('Different Experience Levels', fontsize=14)
+plt.xlabel('Experience Levels', fontsize=14)
+plt.ylabel('Count', fontsize=14)
+plt.grid(True)
+plt.show()
+
+
+#12. Bar diagram to find the most popular job titles
+top_job_titles = df['job_title'].value_counts().head(10)
+sns.barplot(x=top_job_titles.index,y=top_job_titles,)
+plt.xlabel('Job Title')
+plt.ylabel('Count')
+plt.title('Top 10 most popular Job Titles')
+plt.show()
+
+#13. Bar diagram to find top company_locations
+top_company_location = df['company_location'].value_counts().head(5)
+sns.barplot(x=top_company_location.index,y=top_company_location)
+plt.xlabel('company_location')
+plt.ylabel('Count')
+plt.title('Top 5 most popular Company_locations')
+plt.show()
+
+#14. top most jobtitle_experience level_remote ratio _combination
+print('_______________________________top most jobtitle_experience level_remote ratio _combination________________________________')
+print(df.groupby(['job_title','experience_level','remote_ratio']).size().reset_index(name='count').sort_values(by=['count'], ascending=False).head(20))
+
+#15.different employee residence and company location data
+print('_____________________________________________different employee residence and company location data_________________________________________')
+print(df[df['employee_residence'] != df['company_location']].groupby(['employee_residence','company_location']).size().reset_index(name='count').sort_values(by=['count'],ascending=False).head(5))
+print(df[df['employee_residence'] == df['company_location']].groupby(['employee_residence','company_location']).size().reset_index(name='count').sort_values(by=['count'],ascending=False).head(5))
+
+
+#16.using pivot table and histogarm : Count of jobs based on remote_ratio and work_year
+print('_______________________________________Count of employees based on remote_ratio and work_year________________________________')
+table = pd.pivot_table(df,values='job_title',index='work_year',columns='remote_ratio', aggfunc='count')
+print(table)
+fig = px.histogram(x=df['work_year'],color=df['remote_ratio'],barmode='group',labels={'x':'Work Year'},title='Count of jobs based on remote_ratio and work_year')
+fig.show()
+
+#17. Correlation between variables
+category_list = [i for i in df.select_dtypes("object")]
+print('The category list of dataset:', category_list)
+for i in category_list:
+    df[i] = df[i].factorize()[0]
+print(df.head(5))
+print(df.corr())
+plt.figure(figsize=(12,12))
+sns.heatmap(df.corr(),annot=True,linewidths=0.7,cmap="viridis",fmt=".2f")
+plt.show()
+
+
+
+
